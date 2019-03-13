@@ -1,0 +1,3 @@
+[submodule "plotex"]
+	path = plotex
+	url = https://github.com/odinase/plotex.git

@@ -1,6 +1,6 @@
 % TTK4135 - Helicopter lab
 % Hints/template for problem 2.
-% Updated spring 2018, Andreas L. Flï¿½ten
+% Updated spring 2018, Andreas L. Flåten
 
 %% Initialization and model definition
 init; % Change this to the init file corresponding to your helicopter
@@ -36,11 +36,14 @@ z0 = z;                                 % Initial value for optimization
 % Bounds
 ul 	    = -30*pi/180;                   % Lower bound on control                % *
 uu 	    = 30*pi/180;                    % Upper bound on control                % *
+x2l     = -0.4;                         % Lower bound on travel rate 
 
 xl      = -Inf*ones(mx,1);              % Lower bound on states (no bound)
 xu      = Inf*ones(mx,1);               % Upper bound on states (no bound)
+xl(2)   = x2l;                          % Lower bound on travel rate 
 xl(3)   = ul;                           % Lower bound on state x3
 xu(3)   = uu;                           % Upper bound on state x3
+
 
 % Generate constraints on measurements and inputs
 [vlb,vub]       = gen_constraints(N,M,xl,xu,ul,uu); % hint: gen_constraints     % *
@@ -58,14 +61,14 @@ Q1(6,6) = 0;                            % Weight on state x6                    
 q1 = 1;                                 % Weight on input pc                    % *
 q2 = 1;                                 % Weight on input ec                    % *
 P1 = diag([q1 q2]);
-Q = gen_q(Q1,P1,N,M); 
+G = gen_q(Q1,P1,N,M); 
 % Generate Q, hint: gen_q               % *
 c = zeros(N*mx+M*mu,1);                 % Generate c, this is the linear constant term in the QP % *
 
 %% Generate system matrixes for linear model
 Aeq = gen_aeq(A1,B1,N,mx,mu);             % Generate A, hint: gen_aeq
-beq = [A1*x0; zeros(mx*N-6,1)];           % Generate b
-f = @(Z) 0.5*Z'*Q*Z;
+beq = [A1*x0; zeros(mx*(N-1),1)];         % Generate b
+f = @(Z) 0.5*Z'*G*Z;
 alpha = 0.2;
 beta = 20;
 lambda_t = 2*pi/3;
@@ -80,7 +83,7 @@ t1=toc;
 phi1 = 0.0;
 PhiOut = zeros(N*mx+M*mu,1);
 for i=1:N*mx+M*mu
-  phi1=phi1+Q(i,i)*z(i)*z(i);
+  phi1=phi1+G(i,i)*z(i)*z(i);
   PhiOut(i) = phi1;
 end
 
@@ -95,12 +98,13 @@ x4 = [x0(4);z(4:mx:N*mx)];              % State x4 from solution
 x5 = [x0(5);z(5:mx:N*mx)];              % State x5 from solution
 x6 = [x0(6);z(6:mx:N*mx)];              % State x6 from solution
 
+%% Add padding 
 num_variables = 5/delta_t;
 zero_padding = zeros(num_variables,1);
 unit_padding  = ones(num_variables,1);
 
-u1   = [zero_padding; u1; zero_padding];
-u2   = [zero_padding; u2; zero_padding];
+u1  = [zero_padding; u1; zero_padding];
+u2  = [zero_padding; u2; zero_padding];
 x1  = [pi*unit_padding; x1; zero_padding];
 x2  = [zero_padding; x2; zero_padding];
 x3  = [zero_padding; x3; zero_padding];
@@ -116,25 +120,26 @@ subplot(811)
 stairs(t,u1),grid
 ylabel('pc')
 subplot(812)
-plot(t,x1,'m',t,x1,'mo'),grid
-ylabel('lambda')
-subplot(813)
-plot(t,x2,'m',t,x2','mo'),grid
-ylabel('r')
-subplot(814)
-plot(t,x3,'m',t,x3,'mo'),grid
-ylabel('p')
-subplot(815)
-plot(t,x4,'m',t,x4','mo'),grid
-ylabel('e')
-subplot(816)
-plot(t,x5,'m',t,x5','mo'),grid
-ylabel('e\_dot')
-subplot(817)
-plot(t,x6,'m',t,x6','mo'),grid
-subplot(818)
 stairs(t,u2),grid
 ylabel('ec')
+subplot(813)
+plot(t,x1,'m',t,x1,'mo'),grid
+ylabel('lambda')
+subplot(814)
+plot(t,x2,'m',t,x2','mo'),grid
+ylabel('r')
+subplot(815)
+plot(t,x3,'m',t,x3,'mo'),grid
+ylabel('p')
+subplot(816)
+plot(t,x4,'m',t,x4','mo'),grid
+ylabel('p_dot')
+subplot(817)
+plot(t,x5,'m',t,x5','mo'),grid
+ylabel('e')
+subplot(818)
+plot(t,x6,'m',t,x6','mo'),grid
+ylabel('e_dot')
 xlabel('tid (s)')
 
 %% Input struct
@@ -152,6 +157,8 @@ qp_state.signals.values = [x1,x2,x3,x4,x5,x6];
 qp_state.signals.dimensions = 6;
 
 %% LQR
-Q = diag([2,.1,.1,1,1,1]);
-R = diag([.1 .1]);
+% travel,travel_dot,pitch,pitch_dot,elevation,elevation_dot
+Q = diag([5,.1,5,7,10,1]);
+R = diag([.3 .05]);
 [K,~,~] = dlqr(A1,B1,Q,R);
+%K = zeros(2,6);

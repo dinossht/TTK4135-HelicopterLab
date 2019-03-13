@@ -1,7 +1,7 @@
 % TTK4135 - Helicopter lab
 % Hints/template for problem 2.
-% Updated spring 2018, Andreas L. Flåten
-
+% Updated spring 2018, Andreas L. Flï¿½ten
+set(0,'defaulttextInterpreter','latex')
 %% Initialization and model definition
 init; % Change this to the init file corresponding to your helicopter
 
@@ -46,11 +46,7 @@ vlb(N*mx+M*mu)  = 0;                                % We want the last input to 
 vub(N*mx+M*mu)  = 0;                                % We want the last input to be zero
 
 % Generate the matrix Q and the vector c (objecitve function weights in the QP problem) 
-Q1 = zeros(mx,mx);
-Q1(1,1) = 2;                            % Weight on state x1                    % *
-Q1(2,2) = 0;                            % Weight on state x2                    % *
-Q1(3,3) = 0;                            % Weight on state x3                    % *
-Q1(4,4) = 0;                            % Weight on state x4                    % *
+
 P1 = 1;                                 % Weight on input                       % *
 Q = gen_q(Q1,P1,N,M);                   % Generate Q, hint: gen_q               % *
 c = zeros(N*mx+M*mu,1);                 % Generate c, this is the linear constant term in the QP % *
@@ -92,35 +88,71 @@ x4  = [zero_padding; x4; zero_padding];
 
 %% Plotting
 t = 0:delta_t:delta_t*(length(u)-1);
-
+k = 1;
 figure(2)
 subplot(511)
-stairs(t,u),grid
-ylabel('u')
+pl(k) = stairs(t,u);
+if q == 10
+    legend({'$q = 0.1$', '$q = 1$', '$q = 10$'}, 'location', 'best', 'Interpreter', 'latex');
+end
+k = k + 1;
+grid on
+hold on
+ylabel('$u$ [rad]')
+
 subplot(512)
-plot(t,x1,'m',t,x1,'mo'),grid
-ylabel('lambda')
+pl(k) = plot(t,x1);
+if q == 10
+    legend({'$q = 0.1$', '$q = 1$', '$q = 10$'}, 'location', 'best', 'Interpreter', 'latex');
+end
+k = k + 1;
+grid on
+hold on
+ylabel('$\lambda$ [rad]')
 subplot(513)
-plot(t,x2,'m',t,x2','mo'),grid
-ylabel('r')
+pl(k) = plot(t,x2');
+if q == 10
+    legend({'$q = 0.1$', '$q = 1$', '$q = 10$'}, 'location', 'best', 'Interpreter', 'latex');
+end
+k = k + 1;
+grid on
+hold on
+ylabel('$r$ [rad/s]')
 subplot(514)
-plot(t,x3,'m',t,x3,'mo'),grid
-ylabel('p')
+hold on
+pl(k) = plot(t,x3);
+k = k + 1;
+if q == 10
+    legend({'$q = 0.1$', '$q = 1$', '$q = 10$'}, 'location', 'best', 'Interpreter', 'latex');
+end
+grid on
+hold on
+ylabel('$p$ [rad]')
 subplot(515)
-plot(t,x4,'m',t,x4','mo'),grid
-xlabel('tid (s)'),ylabel('pdot')
+pl(k) = plot(t,x4');
+k = k + 1;
+if q == 10
+    legend({'$q = 0.1$', '$q = 1$', '$q = 10$'}, 'location', 'best', 'Interpreter', 'latex');
+end
+grid on
+hold on
+xlabel('$t$ [s]'),ylabel('$\dot{p}$ [rad/s]')
 
-%% Input struct
-qp_input.time = t;
-qp_input.signals.values = u;
-qp_input.signals.dimensions = 1;
+if q == 10
+    sgtitle('Optimal states for different $q$')
+end
 
-%% State struct
-qp_state.time = t;
-qp_state.signals.values = [x1,x2,x3,x4];
-qp_state.signals.dimensions = 4;
-
-%% LQR
-Q = diag([2,.1,.1,1]);
-R = diag([.1]);
-[K,~,~] = dlqr(A1,B1,Q,R);
+% %% Input struct
+% qp_input.time = t;
+% qp_input.signals.values = u;
+% qp_input.signals.dimensions = 1;
+% 
+% %% State struct
+% qp_state.time = t;
+% qp_state.signals.values = [x1,x2,x3,x4];
+% qp_state.signals.dimensions = 4;
+% 
+% %% LQR
+% Q = diag([2,.1,.1,1]);
+% R = diag([.1]);
+% [K,~,~] = dlqr(A1,B1,Q,R);
