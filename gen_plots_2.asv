@@ -29,6 +29,4 @@ run('plot_qp_part3.m');
 
 %% Exercise 4
 
-run('plot_open_loop');
-%run('plot_closed_loop');
-%run('plot_optional_closed_loop');
+run('plot_cl');
